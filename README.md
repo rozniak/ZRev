@@ -14,9 +14,15 @@ This is a brief overview of how I *think* the games run, using Internet Checkers
   - the resource strings contain the DLLs to load for code (aka, COM interface implementations) and DLLs for data ('datafiles' aka they host resources)
   - resource strings also contain the domain names for the server
 - `zClientm.exe` is the COM server that provides `Zone.ClientM`, after initialisation it calls `CClientCore::DoLaunch()`
-- Various COM interfaces are loaded and then execution contains to `IZoneShell`:
+- Various COM interfaces are loaded and then execution continues to `IZoneShell`:
   - `ZCoreM.dll` contains generic objects/interfaces like `IDataStore` and `IEventQueue`
   - `Cmnclim.dll` contains most of the exciting stuff like `IZoneShell` and `IWindowManager`
   - `ZNetM.dll` contains the core network logic and control layer, application packet data is encapsulated within control messages here (via `INetwork` and `IConnection`)
-  - `Zoneclim.dll` hosts `IGameControl` and is responsible for loading the actual game DLL (eg. `chkr.dll`)
+  - `Zoneclim.dll` hosts `IGameControl` and is responsible for managing game protocol state (eg. matchmaking and game ready) and loading the actual game DLL (eg. `chkr.dll`)
   - Each game has its own DLL with the game logic, like `chkdr.dll`
+- The network architecture uses COM interfaces to decouple message handling from the core networking classes:
+  - The control logic is mainly controlled by `CNetworkManager` (in `Cmnclim.dll`), it is the first layer in the application which deals with the 'Hi', 'FirstMsg', and 'Data' packet types
+  - The program flow for networking is handled via an event queue, and handlers registered under the COM interface `IEventClient` listen to the queue for certain messages
+  - The starting point for all the interesting stuff is `CNetworkManager::NetworkFunc`, which is registered as the callback for networking - based on the type of message received (Hi/FirstMsg/Data), it posts an event in the queue to be handled by another class
+  - For instance, when data is received, it posts message ID `0x10003` into the queue, which is picked up in `CGameControl::ProcessEvent` (in `Zoneclim.dll`), examined, and handled further from there
+    - I'm at this stage of investing the message handling to see what happens next, in `CGameControl::ProcessMessage`
