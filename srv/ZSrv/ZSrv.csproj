@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ControlMessages\ZMsgData.cs" />
+    <Compile Include="ControlMessages\ZMsgDataHeader.cs" />
     <Compile Include="ControlMessages\ZMsgFirst.cs" />
     <Compile Include="ControlMessages\ZMsgHeader.cs" />
     <Compile Include="ControlMessages\ZMsgHi.cs" />

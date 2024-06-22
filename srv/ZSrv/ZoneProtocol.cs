@@ -87,7 +87,7 @@ namespace ZSrv
                     //
                     //       For now just dump to file so that I can poke around in a hex editor
                     //
-                    string nextFilename = string.Format("data_seq{0}", Sequence);
+                    string nextFilename = string.Format("data_seq{0}", DateTime.UtcNow.Ticks);
 
                     File.WriteAllBytes(nextFilename, buf);
 
@@ -104,6 +104,23 @@ namespace ZSrv
                     if (LastMessageHeader.IdOrKeyOrChecksum == checksum)
                     {
                         Console.WriteLine("Checksum good");
+
+                        // Data analysis
+                        //
+                        ZMsgData msgData = new ZMsgData(LastMessageHeader, buf);
+
+                        Console.WriteLine(
+                            "Data context: {0}",
+                            Encoding.ASCII.GetString(BitConverter.GetBytes(msgData.DataHeader.Identifier))
+                        );
+                        Console.WriteLine(
+                            "Sequence number: {0}",
+                            msgData.DataHeader.SequenceNumber
+                        );
+                        Console.WriteLine(
+                            "Payload size: {0}",
+                            msgData.DataHeader.PayloadSize
+                        );
                     }
                     else
                     {

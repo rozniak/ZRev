@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ZSrv.ControlMessages
 {
-    internal class ZMsgHi
+    internal sealed class ZMsgHi
     {
         public const uint DataSize = 0x30;
 
