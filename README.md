@@ -24,5 +24,8 @@ This is a brief overview of how I *think* the games run, using Internet Checkers
   - The control logic is mainly controlled by `CNetworkManager` (in `Cmnclim.dll`), it is the first layer in the application which deals with the 'Hi', 'FirstMsg', and 'Data' packet types
   - The program flow for networking is handled via an event queue, and handlers registered under the COM interface `IEventClient` listen to the queue for certain messages
   - The starting point for all the interesting stuff is `CNetworkManager::NetworkFunc`, which is registered as the callback for networking - based on the type of message received (Hi/FirstMsg/Data), it posts an event in the queue to be handled by another class
-  - For instance, when data is received, it posts message ID `0x10003` into the queue, which is picked up in `CGameControl::ProcessEvent` (in `Zoneclim.dll`), examined, and handled further from there
-    - I'm at this stage of investing the message handling to see what happens next, in `CGameControl::ProcessMessage`
+  - For instance, when data is received, it posts message ID `0x10003` into the queue for event clients to pick up and analyze
+    - Analysis looks at an identifier for these data packets, eg. `rout` for network setup / server messages
+    - `rout` messages are picked up by `CMillNetworkCore::ProcessEvent` in `Cmnclim.dll`
+    - Other messages (I haven't figured this out just yet) are processed into the game - they are picked up by `CGameControl::ProcessEvent` in `Zoneclim.dll`
+- Currently I am investigating `CMillNetworkCore` to see how the communication can be progressed, I think via a server 'hello' message - check `CMillNetworkCore::ProcessMessage` for the logic I'm working on
