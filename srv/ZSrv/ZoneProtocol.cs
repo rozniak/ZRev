@@ -152,7 +152,7 @@ namespace ZSrv
 
                 msgRout.Chunks.Add(new ZRoutHelloChunk());
                 msgRout.Chunks.Add(new ZRoutAbilitiesChunk());
-                msgRout.Chunks.Add(new ZRoutProxyInfoChunk("CHKRZM")); // Tee-hee
+                msgRout.Chunks.Add(new ZRoutProxyInfoChunk("mchkr_zm_***")); // Tee-hee
 
                 // Create the data packet
                 //
@@ -180,11 +180,11 @@ namespace ZSrv
                 ns.Write(newBuf, 0, newBuf.Length);
 
                 // TESTING
-                File.WriteAllBytes("resp" + DateTime.UtcNow.Ticks.ToString(), newBuf);
+                //File.WriteAllBytes("resp" + DateTime.UtcNow.Ticks.ToString(), newBuf);
 
                 uint checksum = ZSecurity.GenerateChecksum(1, newBuf, newData.Header.TotalSize - newData.Header.ControlMsgSize - 4, ZMsgHeader.DataSize);
 
-                Console.WriteLine("Our checksum out: {0:X} vs {1:X}", newData.Header.IdOrKeyOrChecksum, checksum);
+                Console.WriteLine("Our checksum out: 0x{0:X} vs 0x{1:X}", newData.Header.IdOrKeyOrChecksum, checksum);
             }
         }
 

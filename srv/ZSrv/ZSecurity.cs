@@ -28,6 +28,7 @@ namespace ZSrv
         public static uint GenerateChecksum(uint passes, byte[] buf, uint len, uint offset = 0)
         {
             byte[] checksumBytes = BitConverter.GetBytes(ChecksumStart);
+            uint end = offset + len;
             uint index = offset;
             uint passesLeft = passes;
 
@@ -35,7 +36,7 @@ namespace ZSrv
 
             while (passesLeft != 0)
             {
-                for (uint i = index; i < len; i++)
+                for (uint i = index; i < end; i++)
                 {
                     checksumBytes[i % 4] = (byte)(buf[i] ^ checksumBytes[i % 4]);
                 }
