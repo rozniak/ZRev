@@ -53,7 +53,7 @@ namespace ZSrv
                             }
                         }
                     }
-                    catch (Exception ex)
+                    catch (IOException ex)
                     {
                         Console.WriteLine();
                         Console.WriteLine("Connection ended: {0}", ex.Message);

@@ -25,10 +25,10 @@ namespace ZSrv
             }
         }
 
-        public static uint GenerateChecksum(uint passes, byte[] buf, uint len)
+        public static uint GenerateChecksum(uint passes, byte[] buf, uint len, uint offset = 0)
         {
             byte[] checksumBytes = BitConverter.GetBytes(ChecksumStart);
-            uint index = 0;
+            uint index = offset;
             uint passesLeft = passes;
 
             ReverseEndianness32(checksumBytes);

@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using ZSrv.ControlMessages;
+using ZSrv.RoutMessages;
 
 namespace ZSrv
 {
@@ -114,13 +115,15 @@ namespace ZSrv
                             Encoding.ASCII.GetString(BitConverter.GetBytes(msgData.DataHeader.Identifier))
                         );
                         Console.WriteLine(
-                            "Sequence number: {0}",
-                            msgData.DataHeader.SequenceNumber
+                            "Context: {0}",
+                            msgData.DataHeader.Context
                         );
                         Console.WriteLine(
                             "Payload size: {0}",
                             msgData.DataHeader.PayloadSize
                         );
+
+                        HandleData(ns, msgData);
                     }
                     else
                     {
@@ -135,6 +138,53 @@ namespace ZSrv
                 case ZoneProtocolReadState.FirstMsg:
                     // Don't think we care about this as a server?
                     break;
+            }
+        }
+
+        private void HandleData(NetworkStream ns, ZMsgData msgData)
+        {
+            if (msgData.DataHeader.Identifier == 0x726f7574) // rout message
+            {
+                // TODO: Handle this properly...
+                Console.WriteLine("rout message received - sending hello");
+
+                ZRoutMsg msgRout = new ZRoutMsg();
+
+                msgRout.Chunks.Add(new ZRoutHelloChunk());
+                msgRout.Chunks.Add(new ZRoutAbilitiesChunk());
+                msgRout.Chunks.Add(new ZRoutProxyInfoChunk("CHKRZM")); // Tee-hee
+
+                // Create the data packet
+                //
+                var newData = new ZMsgData();
+                
+                newData.Payload = msgRout.GetBytes();
+
+                newData.Header.Magic = ZMsgHeader.Signature;
+                newData.Header.TotalSize = newData.DataSize;
+                newData.Header.Sequence = ++Sequence;
+                newData.Header.ControlMsgSize = (ushort) ZMsgHeader.DataSize;
+                newData.Header.Unknown0xc = 0;
+                // Checksum set by data fill bytes
+
+                newData.DataHeader.Identifier = 0x726f7574;
+                newData.DataHeader.Context = 3; // FIXME: Should be an enum once we know it
+                newData.DataHeader.PayloadSize = (uint) newData.Payload.Length;
+
+                // Fill
+                //
+                byte[] newBuf = new byte[newData.DataSize];
+
+                newData.FillBuffer(newBuf);
+
+                ns.Write(newBuf, 0, newBuf.Length);
+
+                // TESTING
+                File.WriteAllBytes("resp" + DateTime.UtcNow.Ticks.ToString(), newBuf);
+
+                uint checksum = ZSecurity.GenerateChecksum(1, newBuf, newData.Header.TotalSize - newData.Header.ControlMsgSize - 4, ZMsgHeader.DataSize);
+
+                Console.WriteLine("Our checksum out: {0:X} vs {1:X}", newData.Header.IdOrKeyOrChecksum, checksum);
             }
         }
 

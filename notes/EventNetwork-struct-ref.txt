@@ -1,0 +1,52 @@
+for ProcessEvent on msg 0x10003, pBuf is offset into the data header
+pBuf = &(DataHeader->dwContext_0x8)
+
+
+EventNetwork struct
+
+0x0 DWORD dwBuf0 (num chunks)
+0x4 DWORD dwBuf4 (size?)
+0x8 struct Chunk
+    0x0 WORD (dwChunkType)
+    0x4 WORD (dwChunkSize)
+    [data]
+-- repeat for remaining chunks --
+
+
+for hello
+DWORD 3
+DWORD >= 4
+[another struct]
+WORD 1
+WORD >= 4, <= dwBuf4
+WORD 1-3
+WORD 1-3
+
+so hello is
+3 chunks
+total size
+
+chunk 1:
+type 1
+size, stick with 4 for now
+--
+
+chunk 2:
+type 7
+size 8
+WORD chatability (1-3)
+WORD statsability (1-3)
+--
+
+chunk 3:
+type 5
+size 0x28
+
+
+
+HandleProxyHello (CMillNetworkCore* pThis, [another struct]* pStruct, DWORD dwBuf4)
+
+0x28
+ALL zeros except
+0x0 WORD
+0x8 CHAR[] GAME ID eg. 'CHKRZM'

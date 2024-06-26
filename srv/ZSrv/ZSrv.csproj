@@ -50,6 +50,11 @@
     <Compile Include="ControlMessages\ZMsgHi.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoutMessages\ZRoutAbilitiesChunk.cs" />
+    <Compile Include="RoutMessages\ZRoutHelloChunk.cs" />
+    <Compile Include="RoutMessages\ZRoutMsg.cs" />
+    <Compile Include="RoutMessages\ZRoutMsgChunkBase.cs" />
+    <Compile Include="RoutMessages\ZRoutProxyInfoChunk.cs" />
     <Compile Include="ZoneProtocol.cs" />
     <Compile Include="ZoneServer.cs" />
     <Compile Include="ZSecurity.cs" />
