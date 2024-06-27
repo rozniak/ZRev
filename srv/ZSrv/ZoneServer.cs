@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ZSrv
@@ -14,7 +15,6 @@ namespace ZSrv
         public void Listen()
         {
             TcpListener listener = new TcpListener(IPAddress.Any, 28805);
-            ZoneProtocol prot = new ZoneProtocol();
 
             listener.Start();
 
@@ -26,39 +26,59 @@ namespace ZSrv
                 {
                     TcpClient client = listener.AcceptTcpClient();
 
-                    Console.WriteLine("Got a client");
+                    ThreadPool.QueueUserWorkItem(ClientProc, client);
+                }
+            }
+        }
 
-                    try
+        private static void ClientProc(object client)
+        {
+            var tcpClient = (TcpClient)client;
+
+            EndPoint endPoint = tcpClient.Client.RemoteEndPoint;
+            ZoneProtocolClient prot = new ZoneProtocolClient(endPoint);
+
+            try
+            {
+                ZLogging.LogServerMessage(
+                    string.Format(
+                        "New connection at {0}",
+                        endPoint
+                    )
+                );
+
+                using (NetworkStream ns = tcpClient.GetStream())
+                {
+                    while (true)
                     {
-                        using (NetworkStream ns = client.GetStream())
+                        // Attempt to read
+                        //
+                        byte[] buf = new byte[prot.NextBytesNeeded];
+                        int read = 0;
+                        bool doneReading = false;
+
+                        while (!doneReading)
                         {
-                            while (true)
-                            {
-                                // Attempt to read
-                                //
-                                byte[] buf = new byte[prot.NextBytesNeeded];
-                                int read = 0;
-                                bool doneReading = false;
+                            read += ns.Read(buf, read, ((int)prot.NextBytesNeeded - read));
 
-                                while (!doneReading)
-                                {
-                                    read += ns.Read(buf, read, ((int)prot.NextBytesNeeded - read));
-
-                                    // Check if we need any more data
-                                    //
-                                    doneReading = read == prot.NextBytesNeeded;
-                                }
-
-                                prot.HandlePacket(ns, buf);
-                            }
+                            // Check if we need any more data
+                            //
+                            doneReading = read == prot.NextBytesNeeded;
                         }
-                    }
-                    catch (IOException ex)
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine("Connection ended: {0}", ex.Message);
+
+                        prot.HandlePacket(ns, buf);
                     }
                 }
+            }
+            catch (IOException ex)
+            {
+                ZLogging.LogServerMessage(
+                    string.Format(
+                        "Connection ended for {0}, reason: {1}",
+                        endPoint,
+                        ex.Message
+                    )
+                );
             }
         }
     }

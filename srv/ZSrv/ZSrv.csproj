@@ -55,7 +55,8 @@
     <Compile Include="RoutMessages\ZRoutMsg.cs" />
     <Compile Include="RoutMessages\ZRoutMsgChunkBase.cs" />
     <Compile Include="RoutMessages\ZRoutProxyInfoChunk.cs" />
-    <Compile Include="ZoneProtocol.cs" />
+    <Compile Include="ZLogging.cs" />
+    <Compile Include="ZoneProtocolClient.cs" />
     <Compile Include="ZoneServer.cs" />
     <Compile Include="ZSecurity.cs" />
   </ItemGroup>

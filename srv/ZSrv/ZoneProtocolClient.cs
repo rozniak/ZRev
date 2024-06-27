@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,19 +19,21 @@ namespace ZSrv
         FirstMsg = 4
     }
 
-    internal sealed class ZoneProtocol
+    internal sealed class ZoneProtocolClient
     {
         public uint NextBytesNeeded { get; private set; }
 
+        private EndPoint EndPoint;
         private ZMsgHeader LastMessageHeader;
         private ZoneProtocolReadState ReadState;
         private ushort Sequence;
 
-        public ZoneProtocol()
+        public ZoneProtocolClient(EndPoint endPoint)
         {
-            SetReadState(ZoneProtocolReadState.Hi);
-
+            EndPoint = endPoint;
             Sequence = 1;
+
+            SetReadState(ZoneProtocolReadState.Hi);
         }
 
         public void HandlePacket(NetworkStream ns, byte[] buf)
@@ -42,7 +45,14 @@ namespace ZSrv
                     //
                     ZSecurity.Encrypt(buf, ZMsgHi.DataSize, ZSecurity.DefaultKey);
                     ZMsgHi msgHi = new ZMsgHi(buf);
-                    Console.WriteLine("Received hi message from {0}!", msgHi.ClientGuid);
+
+                    ZLogging.LogClientMessage(
+                        EndPoint,
+                        string.Format(
+                            "Received hi message - I am {0}",
+                            msgHi.ClientGuid
+                        )
+                    );
                     
                     // Handle response
                     //
@@ -60,7 +70,10 @@ namespace ZSrv
                     ZSecurity.Encrypt(respBuf, ZMsgHeader.DataSize, ZSecurity.DefaultKey);
                     ns.Write(respBuf, 0, (int) ZMsgFirst.DataSize);
 
-                    Console.WriteLine("Responded with First Message, and now we wait for ze data...");
+                    ZLogging.LogClientMessage(
+                        EndPoint,
+                        "Responded with First Message, and now we wait for ze data..."
+                    );
 
                     SetReadState(ZoneProtocolReadState.DataHeader);
 
@@ -73,9 +86,12 @@ namespace ZSrv
 
                     Sequence = LastMessageHeader.Sequence;
 
-                    Console.WriteLine(
-                        "Data header received, expecting {0} bytes...",
-                        LastMessageHeader.TotalSize - LastMessageHeader.ControlMsgSize
+                    ZLogging.LogClientMessage(
+                        EndPoint,
+                        string.Format(
+                            "Data header received, expecting {0} bytes...",
+                            LastMessageHeader.TotalSize - LastMessageHeader.ControlMsgSize
+                        )
                     );
 
                     SetReadState(ZoneProtocolReadState.Data);
@@ -92,8 +108,12 @@ namespace ZSrv
 
                     File.WriteAllBytes(nextFilename, buf);
 
-                    Console.WriteLine(
-                        "We received some data! I'm chucking it in {0}", nextFilename
+                    ZLogging.LogClientMessage(
+                        EndPoint,
+                        string.Format(
+                            "We received some data! I'm chucking it in {0}",
+                            nextFilename
+                        )
                     );
 
                     // Test out checksum...
@@ -104,32 +124,48 @@ namespace ZSrv
 
                     if (LastMessageHeader.IdOrKeyOrChecksum == checksum)
                     {
-                        Console.WriteLine("Checksum good");
+                        ZLogging.LogClientMessage(EndPoint, "Checksum good");
 
                         // Data analysis
                         //
                         ZMsgData msgData = new ZMsgData(LastMessageHeader, buf);
 
-                        Console.WriteLine(
-                            "Data context: {0}",
-                            Encoding.ASCII.GetString(BitConverter.GetBytes(msgData.DataHeader.Identifier))
+                        ZLogging.LogClientMessage(
+                            EndPoint,
+                            string.Format(
+                                "Data context: {0}",
+                                Encoding.ASCII.GetString(
+                                    BitConverter.GetBytes(msgData.DataHeader.Identifier)
+                                )
+                            )
                         );
-                        Console.WriteLine(
-                            "Context: {0}",
-                            msgData.DataHeader.Context
+                        ZLogging.LogClientMessage(
+                            EndPoint,
+                            string.Format(
+                                "Context: {0}",
+                                msgData.DataHeader.Context
+                            )
                         );
-                        Console.WriteLine(
-                            "Payload size: {0}",
-                            msgData.DataHeader.PayloadSize
+                        ZLogging.LogClientMessage(
+                            EndPoint,
+                            string.Format(
+                                "Payload size: {0}",
+                                msgData.DataHeader.PayloadSize
+                            )
                         );
 
                         HandleData(ns, msgData);
                     }
                     else
                     {
-                        Console.WriteLine("Checksum bad, expected {0:X} and got {1:X}",
-                            LastMessageHeader.IdOrKeyOrChecksum,
-                            checksum);
+                        ZLogging.LogClientMessage(
+                            EndPoint,
+                            string.Format(
+                                "Checksum bad, expected {0:X} and got {1:X}",
+                                LastMessageHeader.IdOrKeyOrChecksum,
+                                checksum
+                            )
+                        );
                     }
 
                     SetReadState(ZoneProtocolReadState.DataHeader);
@@ -146,7 +182,10 @@ namespace ZSrv
             if (msgData.DataHeader.Identifier == 0x726f7574) // rout message
             {
                 // TODO: Handle this properly...
-                Console.WriteLine("rout message received - sending hello");
+                ZLogging.LogClientMessage(
+                    EndPoint,
+                    "rout message received - sending hello"
+                );
 
                 ZRoutMsg msgRout = new ZRoutMsg();
 
@@ -182,9 +221,9 @@ namespace ZSrv
                 // TESTING
                 //File.WriteAllBytes("resp" + DateTime.UtcNow.Ticks.ToString(), newBuf);
 
-                uint checksum = ZSecurity.GenerateChecksum(1, newBuf, newData.Header.TotalSize - newData.Header.ControlMsgSize - 4, ZMsgHeader.DataSize);
+                //uint checksum = ZSecurity.GenerateChecksum(1, newBuf, newData.Header.TotalSize - newData.Header.ControlMsgSize - 4, ZMsgHeader.DataSize);
 
-                Console.WriteLine("Our checksum out: 0x{0:X} vs 0x{1:X}", newData.Header.IdOrKeyOrChecksum, checksum);
+                //Console.WriteLine("Our checksum out: 0x{0:X} vs 0x{1:X}", newData.Header.IdOrKeyOrChecksum, checksum);
             }
         }
 
