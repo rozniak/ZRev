@@ -29,7 +29,9 @@ namespace ZSrv.RoutMessages
             // Literally don't care about 90% of the struct, except the game
             // name and flags (which we barely know anything about)
             //
-            byte flags = (byte) (ServerAvailable ? 0x1 : 0);
+            // Setting flags to 3 for server available and don't reconnect
+            //
+            byte flags = (byte) (ServerAvailable ? 0x3 : 0);
             byte[] gameNameBytes = Encoding.ASCII.GetBytes(Game);
 
             Array.Copy(gameNameBytes, 0, buf, 8, gameNameBytes.Length);
