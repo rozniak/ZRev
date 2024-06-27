@@ -30,6 +30,8 @@ namespace ZSrv.RoutMessages
             // name and flags (which we barely know anything about)
             //
             // Setting flags to 3 for server available and don't reconnect
+            //   0x1 = server available (0 for maintenance mode)
+            //   0x2 = don't reconnect (probs if we specified a different server)
             //
             byte flags = (byte) (ServerAvailable ? 0x3 : 0);
             byte[] gameNameBytes = Encoding.ASCII.GetBytes(Game);
