@@ -1,0 +1,8 @@
+ZoomMsg...
+
+dwContext 9
+dwSize ??
+0x8 ... HandleGameMessage
+    0x0 DWORD
+    0x4 DWORD
+    0x8 WORD
